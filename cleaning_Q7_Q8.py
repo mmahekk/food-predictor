@@ -61,8 +61,8 @@ def process_data(df):
             for word in words:
                 word = word.strip()
                 if word:
-                    q7_features[i, word_to_idx[word]] += 1
-    
+                    q7_features[i, word_to_idx[word]] = 1
+                        
     #Q8 one hot encoding
     hot_sauce_levels = ['None', 'A little (mild)', 'A moderate amount (medium)', 'A lot (hot)', 'I will have some of this food item with my hot sauce']
     hot_sauce_to_idx = {level: idx for idx, level in enumerate(hot_sauce_levels)}
