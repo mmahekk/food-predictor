@@ -72,7 +72,7 @@ def process_data(df):
         if response in hot_sauce_to_idx:
             q8_features[i, hot_sauce_to_idx[response]] = 1
     
-    return q7_features, q8_features, word_to_idx, hot_sauce_to_idx
+    return q7_features.astype(int), q8_features.astype(int), word_to_idx, hot_sauce_to_idx
 
 
 
