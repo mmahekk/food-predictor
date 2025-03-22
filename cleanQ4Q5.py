@@ -84,8 +84,7 @@ movie_features_df = pd.DataFrame(movie_features, columns=movie_to_idx.keys())
 # Join the cleaned data to the original dataframe
 final_data = pd.concat([data, movie_features_df], axis=1)
 
-# Save the final cleaned dataset to a new CSV file
-final_data.to_csv("cleaned_data_q4_q5_combined.csv", index=False)
+# final_data.to_csv("cleaned_data_q4_q5_combined.csv", index=False)
 
 # Show the final cleaned data
 print(final_data.head())
