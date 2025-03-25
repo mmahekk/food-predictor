@@ -68,7 +68,7 @@ def process_data(df):
     hot_sauce_to_idx = {level: idx for idx, level in enumerate(hot_sauce_levels)}
     
     q8_features = np.zeros((n_samples, len(hot_sauce_levels)))
-    for i, response in enumerate(df["Q8: How much hot sauce would you add to this food item?"]):
+    for i, response in enumerate(df["Q8: How much hot sauce would you add to this food item?"].fillna("None")):
         if response in hot_sauce_to_idx:
             q8_features[i, hot_sauce_to_idx[response]] = 1
     
