@@ -1,11 +1,11 @@
 import pandas as pd
 
 
-df = pd.read_csv("cleaned_data_combined.csv")
-# print(df['Q6: What drink would you pair with this food item?'].unique())
+# df = pd.read_csv("cleaned_data_combined.csv")
+# # print(df['Q6: What drink would you pair with this food item?'].unique())
 
 
-df['Q6: What drink would you pair with this food item?'] = df['Q6: What drink would you pair with this food item?'].str.lower()
+# df['Q6: What drink would you pair with this food item?'] = df['Q6: What drink would you pair with this food item?'].str.lower()
 mapping = {
     "cola": "coca-cola",
     "coke": "coca-cola",
@@ -64,14 +64,14 @@ def map_drink(value):
                 return mapping[key]  # Replace with mapped value
     return value  # Keep original if no match found
 
-check = df['Q6: What drink would you pair with this food item?'].tolist()
-print(check)
-df['Q6: What drink would you pair with this food item?'] = df['Q6: What drink would you pair with this food item?'].apply(map_drink)
-# df['Q6: What drink would you pair with this food item?'] = df['Q6: What drink would you pair with this food item?'].replace(mapping)
-# df['Q6: What drink would you pair with this food item?'] = df['Q6: What drink would you pair with this food item?'].str.replace(r"[^a-zA-Z0-9\s]", "", regex=True)
-# df['Q6: What drink would you pair with this food item?'] = df['Q6: What drink would you pair with this food item?'].str.replace("\xa0", "", regex=True)
-unique_cleaned_values = df['Q6: What drink would you pair with this food item?'].tolist()
-print(unique_cleaned_values)
+# check = df['Q6: What drink would you pair with this food item?'].tolist()
+# print(check)
+# df['Q6: What drink would you pair with this food item?'] = df['Q6: What drink would you pair with this food item?'].apply(map_drink)
+# # df['Q6: What drink would you pair with this food item?'] = df['Q6: What drink would you pair with this food item?'].replace(mapping)
+# # df['Q6: What drink would you pair with this food item?'] = df['Q6: What drink would you pair with this food item?'].str.replace(r"[^a-zA-Z0-9\s]", "", regex=True)
+# # df['Q6: What drink would you pair with this food item?'] = df['Q6: What drink would you pair with this food item?'].str.replace("\xa0", "", regex=True)
+# unique_cleaned_values = df['Q6: What drink would you pair with this food item?'].tolist()
+# print(unique_cleaned_values)
 
 # def clean_text(text):
 #     """Removes extra spaces, special characters, and standardizes capitalization."""
