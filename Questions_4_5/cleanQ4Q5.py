@@ -88,6 +88,7 @@ final_data = pd.concat([data, movie_features_df], axis=1)
 
 # Show the final cleaned data
 print(final_data.head())
+print(final_data['Q4_Full_Price'].dtype)
 
 
 
