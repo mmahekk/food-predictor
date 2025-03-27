@@ -2,7 +2,15 @@ import pandas as pd
 import numpy as np
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import classification_report, accuracy_score
+from sklearn.metrics import (
+    classification_report, 
+    accuracy_score, 
+    confusion_matrix, 
+    ConfusionMatrixDisplay,
+    roc_curve,
+    auc
+)
+import matplotlib.pyplot as plt
 import sys
 import re
 
@@ -147,7 +155,44 @@ def process_q4_data_fix(df):
     q4_features = np.nan_to_num(q4_features, nan=median_value)
     return q4_features, "price_expectation"
 
+def plot_confusion_matrix(y_true, y_pred, labels):
+    """
+    Plot confusion matrix using scikit-learn's ConfusionMatrixDisplay.
+    """
+    cm = confusion_matrix(y_true, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=labels)
+    fig, ax = plt.subplots(figsize=(10, 8))
+    disp.plot(ax=ax)
+    plt.title('Confusion Matrix')
+    plt.savefig('confusion_matrix.png')
+    plt.show()
 
+def plot_roc_curves(y_true, y_prob, labels):
+    """
+    Plot ROC curves for each class using one-vs-rest approach.
+    """
+    n_classes = len(labels)
+    y_true_binary = np.zeros((len(y_true), n_classes))
+    
+    for i, label in enumerate(labels):
+        y_true_binary[:, i] = (y_true == label)
+    
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    for i, label in enumerate(labels):
+        fpr, tpr, _ = roc_curve(y_true_binary[:, i], y_prob[:, i])
+        roc_auc = auc(fpr, tpr)
+        ax.plot(fpr, tpr, label=f'{label} (AUC = {roc_auc:.2f})')
+    
+    ax.plot([0, 1], [0, 1], 'k--')
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.05])
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.set_title('ROC Curves (One-vs-Rest)')
+    ax.legend(loc="lower right")
+    plt.savefig('roc_curves.png')
+    plt.show()
 
 def train_naive_bayes_model(df_train, df_test):
     train_features_list = []
@@ -247,12 +292,16 @@ def train_naive_bayes_model(df_train, df_test):
     model.fit(X_train, y_train)
     
     y_test_pred = model.predict(X_test)
+    y_test_prob = model.predict_proba(X_test)
     
     y_train_pred = model.predict(X_train)
     
     test_accuracy = accuracy_score(y_test, y_test_pred)
     train_accuracy = accuracy_score(y_train, y_train_pred)
     report = classification_report(y_test, y_test_pred)
+    
+    plot_confusion_matrix(y_test, y_test_pred, model.classes_)
+    plot_roc_curves(y_test, y_test_prob, model.classes_)
     
     return test_accuracy, train_accuracy, report, model, feature_names, X_train.shape
 
@@ -285,6 +334,5 @@ def main():
     print(f"Validation Accuracy: {test_accuracy:.4f}")
     print("\nClassification Report:")
     print(report)
-
 if __name__ == "__main__":
     main()
