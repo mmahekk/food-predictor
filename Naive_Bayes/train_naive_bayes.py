@@ -293,6 +293,7 @@ def train_naive_bayes_model(df_train, df_valid, param_grid=None):
     best_params = None
     
     if param_grid:
+        # NOTE: when cv is not provided, gridsearchcv will automatically use 5-fold cross validation
         grid_search = GridSearchCV(model, param_grid, n_jobs=-1, verbose=1)
         grid_search.fit(X_train, y_train)
         model = grid_search.best_estimator_
@@ -328,6 +329,7 @@ def main():
     print(f"Validation data size: {len(df_valid)} rows")
     print(f"Training data size: {len(df_train)} rows")
 
+    # df_train, df_valid = train_test_split(df, test_size=0.3)
     # df_train, df_valid = train_test_split(df, test_size=0.2)
 
         
