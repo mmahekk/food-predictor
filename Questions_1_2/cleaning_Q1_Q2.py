@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from io import StringIO
 
+
 text_to_number = {
     'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
     'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
@@ -58,19 +59,19 @@ def parse_q2_response(response, word_bank=None):
 
 
 # Example of how it will be used for Q2:
-data = """id,Q1,Q2: How many ingredients,Q3,Q4,Q5,Q6,Q7,Q8,Label
-716549,3,6,"Lunch, Party","5","Movie1","Coke","Friends","Mild",Pizza
-715742,4,"bread, meat","Lunch, Party","$5","Movie2","Coke","Friends, Teachers","None",Pizza
-727333,3,5,"Lunch, Dinner","10","Movie3","Cola","Friends","Medium",Pizza
-606874,4,"8, 6-7","Lunch, Dinner","$3","Movie4","Soda","Teachers","Hot",Pizza
-700000,3,"bread, meat",Dinner,"$8","Movie5","Coke","Family","None",Pizza
-"""
-df = pd.read_csv(StringIO(data))
+# data = """id,Q1,Q2: How many ingredients,Q3,Q4,Q5,Q6,Q7,Q8,Label
+# 716549,3,6,"Lunch, Party","5","Movie1","Coke","Friends","Mild",Pizza
+# 715742,4,"bread, meat","Lunch, Party","$5","Movie2","Coke","Friends, Teachers","None",Pizza
+# 727333,3,5,"Lunch, Dinner","10","Movie3","Cola","Friends","Medium",Pizza
+# 606874,4,"8, 6-7","Lunch, Dinner","$3","Movie4","Soda","Teachers","Hot",Pizza
+# 700000,3,"bread, meat",Dinner,"$8","Movie5","Coke","Family","None",Pizza
+# """
+# df = pd.read_csv("/Users/mahek/Desktop/MISC/csc311-food-prediction/cleaned_data_combined.csv")
 
-def clean_q2_row(row):
-    bank = word_bank_by_label.get(row["Label"], None)
-    return parse_q2_response(row["Q2: How many ingredients"], word_bank=bank)
+# def clean_q2_row(row):
+#     bank = word_bank_by_label.get(row["Label"], None)
+#     return parse_q2_response(row["Q2: How many ingredients would you expect this food item to contain?"], word_bank=bank)
 
-df["Q2_cleaned"] = df.apply(clean_q2_row, axis=1)
+# df["Q2_cleaned"] = df.apply(clean_q2_row, axis=1)
 
-print(df[["Q2: How many ingredients", "Q2_cleaned", "Label"]])
+# print(df[["Q2: How many ingredients would you expect this food item to contain?", "Q2_cleaned", "Label"]])
