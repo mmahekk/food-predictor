@@ -1,0 +1,319 @@
+import pandas as pd
+import numpy as np
+import sys
+import re
+import argparse
+
+mapping = {
+    "cola": "coca-cola",
+    "coke": "coca-cola",
+    "coke zero": "coca-cola",
+    "diet coke": "coca-cola",
+    "diet pepsi": "pepsi",
+    "crush": "fanta",
+    "root beer": "soda",
+    "soft drink": "soda",
+    "carbonated water": "water",
+    "soda pop": "soda",
+    "pop": "soda",
+    "bubble tea": "tea",
+    "green tea": "tea",
+    "black tea": "tea",
+    "oolong tea": "tea",
+    "jasmine tea": "tea",
+    "barley tea": "tea",
+    "hot tea": "tea",
+    "matcha": "tea",
+    "milk tea": "tea",
+    "soy milk": "milk",
+    "almond milk": "milk",
+    "chocolate milk": "milk",
+    "pineapple soda": "fanta",
+    "miso soup": "soup",
+    "fermented tea": "tea",
+    "kombucha": "tea",
+    "kraken rum": "rum",
+    "martini cocktail": "cocktail",
+    "calpis water": "water",
+    "yakult drink": "yakult",
+    "ramune soda": "soda",
+    "rice wine": "sake",
+    "nihonshu": "sake",
+    "sparkling wine": "wine",
+    "red wine": "wine",
+    "white wine": "wine",
+    "ginger beer": "beer",
+    "spiced rum": "rum",
+    "vodka cocktail": "cocktail",
+    "gin martini": "martini",
+    "water": None,
+    "milk": None,
+}
+
+def map_drink(value):
+    if pd.isna(value):
+        return value
+    value = value.lower().strip()
+    for key in mapping.keys(): 
+        if key in value:
+            if mapping[key] is None:
+                return value
+            else:
+                return mapping[key] 
+    return value 
+
+text_to_number = {
+    'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4,
+    'five': 5, 'six': 6, 'seven': 7, 'eight': 8, 'nine': 9,
+    'ten': 10, 'eleven': 11, 'twelve': 12
+}
+
+word_bank_by_label = {
+    'Pizza': {'cheese', 'tomato', 'dough', 'pepperoni', 'sauce', 'basil', 'water', 'oil', 'meat', 'olives'},
+    'Shawarma': {'meat', 'pita', 'garlic', 'tahini', 'salad', 'onion', 'chicken', 'sauce', 'fries', 'rice'},
+    'Sushi': {'rice', 'fish', 'seaweed', 'soy', 'wasabi', 'ginger', 'salmon', 'avocado'}
+}
+
+def parse_q2_response(response, word_bank=None):
+    """
+    Cleans a Q2 response by priority:
+      1) Look for dash ranges (e.g., "3-4") and return their average.
+      2) Look for remaining digits and return the largest found.
+      3) Look for textual numbers (e.g., "three") and return the largest found.
+      4) If none of the above are found, split the response on commas and count tokens
+         that include at least one word from the provided word bank.
+    """
+    if not isinstance(response, str):
+        return np.nan
+
+    resp = response.lower().strip()
+    numeric_values = []
+
+    for low_str, high_str in re.findall(r'(\d+)-(\d+)', resp):
+        avg_val = (int(low_str) + int(high_str)) / 2.0
+        numeric_values.append(avg_val)
+
+    resp = re.sub(r'\d+-\d+', '', resp)
+
+    nums = re.findall(r'\b\d+\b', resp)
+    if nums:
+        numeric_values.append(max(int(num) for num in nums))
+
+    words = re.findall(r'\b[a-z]+\b', resp)
+    txt_nums = [text_to_number[word] for word in words if word in text_to_number]
+    if txt_nums:
+        numeric_values.append(max(txt_nums))
+
+    if numeric_values:
+        return float(max(numeric_values))
+    else:
+        tokens = [token.strip() for token in response.split(',')]
+        count = 0
+        for token in tokens:
+            token_words = re.findall(r'\b[a-z]+\b', token.lower())
+            if word_bank and any(word in word_bank for word in token_words):
+                count += 1
+        return float(count) if count > 0 else np.nan
+
+def process_q1_data(df):
+    q1_col = [col for col in df.columns if 'Q1' in col][0]
+
+    def extract_numeric(value):
+        if pd.isna(value):
+            return np.nan
+        if isinstance(value, (int, float)):
+            return float(value)
+        matches = re.findall(r'\d+', str(value))
+        if matches:
+            return float(matches[0])
+        return np.nan
+
+    q1_values = df[q1_col].apply(extract_numeric)
+
+    q1_features = np.array(q1_values).reshape(-1, 1)
+
+    median_value = np.nanmedian(q1_features)
+    q1_features = np.nan_to_num(q1_features, nan=median_value)
+
+    return q1_features, "complexity_rating"
+
+def process_q2_data_fix(df):
+    q2_col = [col for col in df.columns if 'Q2' in col][0]
+
+    word_bank_by_label = {
+        'Pizza': {'cheese', 'tomato', 'dough', 'pepperoni', 'sauce', 'basil', 'water', 'oil', 'meat', 'olives'},
+        'Shawarma': {'meat', 'pita', 'garlic', 'tahini', 'salad', 'onion', 'chicken', 'sauce', 'fries', 'rice'},
+        'Sushi': {'rice', 'fish', 'seaweed', 'soy', 'wasabi', 'ginger', 'salmon', 'avocado'}
+    }
+
+    def clean_q2_row(row):
+        bank = word_bank_by_label.get(row["Label"], None)
+        return parse_q2_response(row[q2_col], word_bank=bank)
+
+    q2_cleaned = df.apply(clean_q2_row, axis=1)
+
+    q2_features = np.array(q2_cleaned).reshape(-1, 1)
+
+    median_value = np.nanmedian(q2_features)
+    q2_features = np.nan_to_num(q2_features, nan=median_value)
+
+    return q2_features, "ingredient_count"
+
+
+def process_q4_data_fix(df):
+    q4_col = [col for col in df.columns if 'Q4' in col][0]
+
+    def extract_price(value):
+        if pd.isna(value):
+            return np.nan
+        if isinstance(value, (int, float)):
+            return float(value)
+        matches = re.findall(r'\d+(?:\.\d+)?', str(value))
+        if matches:
+            return float(max(matches, key=float))
+        return np.nan
+
+    q4_values = df[q4_col].apply(extract_price)
+
+    q4_features = np.array(q4_values).reshape(-1, 1)
+
+    median_value = np.nanmedian(q4_features)
+    q4_features = np.nan_to_num(q4_features, nan=median_value)
+    return q4_features, "price_expectation"
+
+
+def softmax(z):
+    """Compute softmax values for each set of scores in z."""
+    e_z = np.exp(z - np.max(z, axis=1, keepdims=True)) 
+    return e_z / e_z.sum(axis=1, keepdims=True)
+
+def predict(X, coef, intercept, classes):
+    """Make predictions using the loaded model parameters."""
+    scores = X @ coef.T + intercept
+    probabilities = softmax(scores)
+    predicted_indices = np.argmax(probabilities, axis=1)
+    predicted_labels = classes[predicted_indices]
+    return predicted_labels
+
+def create_features_for_prediction(df, params):
+    """
+    Creates the feature matrix X for prediction, ensuring the order and 
+    processing matches the training phase using loaded mappings.
+    
+    Args:
+        df: DataFrame with the input data.
+        params: Dictionary containing loaded model parameters and mappings.
+
+    Returns:
+        X: numpy array, the feature matrix for prediction.
+    """
+    features_list = []
+    
+    q1_features, _ = process_q1_data(df.copy())
+    features_list.append(q1_features)
+    
+    temp_df_q2 = df.copy()
+    q2_features, _ = process_q2_data_fix(temp_df_q2)
+    features_list.append(q2_features)
+
+    q3_col = [col for col in df.columns if 'Q3' in col][0]
+    q3_word_to_idx = params['q3_word_to_idx'].item()
+    n_q3_words = len(q3_word_to_idx)
+    q3_features = np.zeros((len(df), n_q3_words))
+    temp_q3 = df[q3_col].fillna('').str.lower().str.strip()
+    for i, response in enumerate(temp_q3):
+        if response:
+            for word in response.split(','):
+                word = word.strip()
+                if word in q3_word_to_idx:
+                    q3_features[i, q3_word_to_idx[word]] = 1
+    features_list.append(q3_features)
+
+    q6_col = [col for col in df.columns if 'Q6' in col][0]
+    q6_word_to_idx = params['q6_word_to_idx'].item()
+    n_q6_words = len(q6_word_to_idx)
+    q6_features = np.zeros((len(df), n_q6_words))
+    temp_q6 = df[q6_col].fillna('').str.lower().str.strip()
+    temp_q6 = temp_q6.apply(map_drink) 
+    for i, response in enumerate(temp_q6):
+         if response:
+            for word in response.split(','):
+                word = word.strip()
+                if word in q6_word_to_idx:
+                    q6_features[i, q6_word_to_idx[word]] = 1
+    features_list.append(q6_features)
+
+    q4_features, _ = process_q4_data_fix(df.copy())
+    features_list.append(q4_features)
+
+    q5_col = [col for col in df.columns if 'Q5' in col][0]
+    q5_word_to_idx = params['q5_word_to_idx'].item()
+    n_q5_words = len(q5_word_to_idx)
+    q5_features = np.zeros((len(df), n_q5_words))
+    temp_q5 = df[q5_col].fillna('').str.lower().str.strip()
+    for i, response in enumerate(temp_q5):
+         if response:
+            for movie in response.split(','):
+                movie = movie.strip()
+                if movie in q5_word_to_idx:
+                    q5_features[i, q5_word_to_idx[movie]] = 1
+    features_list.append(q5_features)
+
+    q7_word_to_idx = params['q7_word_to_idx'].item()
+    q8_category_to_idx = params['q8_category_to_idx'].item()
+    n_q7_words = len(q7_word_to_idx)
+    n_q8_cats = len(q8_category_to_idx)
+    q7_features = np.zeros((len(df), n_q7_words))
+    q8_features = np.zeros((len(df), n_q8_cats))
+    
+    q7_col = [col for col in df.columns if 'Q7' in col][0]
+    q8_col = [col for col in df.columns if 'Q8' in col][0]
+    temp_q7 = df[q7_col].fillna('').str.lower().str.strip()
+    temp_q8 = df[q8_col].fillna('').str.lower().str.strip()
+
+    for i, response in enumerate(temp_q7):
+        if response:
+            for word in response.split(','): 
+                word = word.strip()
+                if word in q7_word_to_idx:
+                    q7_features[i, q7_word_to_idx[word]] = 1
+                    
+    for i, response in enumerate(temp_q8):
+         if response:
+            categories = response.split(',')
+            for cat in categories:
+                cat = cat.strip() 
+                if cat in q8_category_to_idx:
+                    q8_features[i, q8_category_to_idx[cat]] = 1
+
+    features_list.append(q7_features)
+    features_list.append(q8_features)
+
+    X = np.hstack(features_list)
+        
+    return X
+
+def predict_all(csv_file_path):
+
+    params = np.load("softmax_model_params.npz", allow_pickle=True) 
+        
+    coef = params['coef']
+    intercept = params['intercept']
+    classes = params['classes']
+
+
+    df_predict = pd.read_csv(csv_file_path)
+
+    X_predict = create_features_for_prediction(df_predict, params)
+    print(f"Created feature matrix with shape: {X_predict.shape}")
+
+    predictions = predict(X_predict, coef, intercept, classes)
+
+
+    y_true = df_predict['Label'].values
+    accuracy = np.mean(predictions == y_true)
+    print(f"\nPrediction Accuracy: {accuracy:.4f}")
+
+
+if __name__ == "__main__":
+    predict_all("../cleaned_data_combined.csv")
