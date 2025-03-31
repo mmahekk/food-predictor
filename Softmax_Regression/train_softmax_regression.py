@@ -267,7 +267,6 @@ def main():
     print("Test Log Loss: {:.4f}".format(test_loss))
     print("\nClassification Report:\n", report)
 
-    # Save model parameters and necessary mappings
     params_to_save = {
         'coef': model.coef_,
         'intercept': model.intercept_,
@@ -275,9 +274,6 @@ def main():
         'feature_names': feature_names,
     }
 
-    # Need to recapture the mappings created during feature processing
-    # Re-run parts of the feature processing on the training data to get mappings
-    # This is slightly redundant but ensures consistency
     _, _, q3_word_to_idx, q6_word_to_idx = process_q3q6_data(df_train)
     _, q5_word_to_idx = create_movie_features(df_train)
     _, _, q7_word_to_idx, q8_category_to_idx = process_data(df_train)
@@ -288,7 +284,6 @@ def main():
     params_to_save['q7_word_to_idx'] = q7_word_to_idx
     params_to_save['q8_category_to_idx'] = q8_category_to_idx
 
-    # Define the save path
     save_path = "softmax_model_params.npz"
     np.savez(save_path, **params_to_save)
     print(f"\nModel parameters saved to {save_path}")
