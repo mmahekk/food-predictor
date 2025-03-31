@@ -3,7 +3,7 @@ import numpy as np
 import re
 
 # Load dataset
-data = pd.read_csv("cleaned_data_combined_modified.csv")
+data = pd.read_csv("../cleaned_data_combined_modified.csv")
 
 # QUESTION 4 - PRICE QUESTION
 
