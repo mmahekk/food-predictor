@@ -186,7 +186,7 @@ def softmax(z):
 
 def predict(X, coef, intercept, classes):
     """Make predictions using the loaded model parameters."""
-    #multiple by feature matrix and add bias
+    #multiply by feature matrix and add bias
     scores = X @ coef.T + intercept
     #apply softmax to scores
     probabilities = softmax(scores)
@@ -202,13 +202,16 @@ def create_features_for_prediction(df, params):
     """
     features_list = []
     
+    #process q1 (handle invalid inputs if they exist)
     q1_features, _ = process_q1_data(df.copy())
     features_list.append(q1_features)
     
+    #process q2 into numbers (handle words in responses)
     temp_df_q2 = df.copy()
     q2_features, _ = process_q2_data_fix(temp_df_q2)
     features_list.append(q2_features)
 
+    #process q3 into bag of words
     q3_col = [col for col in df.columns if 'Q3' in col][0]
     q3_word_to_idx = params['q3_word_to_idx'].item()
     n_q3_words = len(q3_word_to_idx)
@@ -222,6 +225,7 @@ def create_features_for_prediction(df, params):
                     q3_features[i, q3_word_to_idx[word]] = 1
     features_list.append(q3_features)
 
+    #process q6 into bag of words
     q6_col = [col for col in df.columns if 'Q6' in col][0]
     q6_word_to_idx = params['q6_word_to_idx'].item()
     n_q6_words = len(q6_word_to_idx)
@@ -236,9 +240,11 @@ def create_features_for_prediction(df, params):
                     q6_features[i, q6_word_to_idx[word]] = 1
     features_list.append(q6_features)
 
+    #process q4 into numbers
     q4_features, _ = process_q4_data_fix(df.copy())
     features_list.append(q4_features)
 
+    #process q5 into bag of words
     q5_col = [col for col in df.columns if 'Q5' in col][0]
     q5_word_to_idx = params['q5_word_to_idx'].item()
     n_q5_words = len(q5_word_to_idx)
@@ -264,20 +270,18 @@ def create_features_for_prediction(df, params):
     temp_q7 = df[q7_col].fillna('').str.lower().str.strip()
     temp_q8 = df[q8_col].fillna('').str.lower().str.strip()
 
+    #process q7 into bag of words
     for i, response in enumerate(temp_q7):
         if response:
             for word in response.split(','): 
                 word = word.strip()
                 if word in q7_word_to_idx:
                     q7_features[i, q7_word_to_idx[word]] = 1
-                    
+
+    #process q8 into one hot
     for i, response in enumerate(temp_q8):
-         if response:
-            categories = response.split(',')
-            for cat in categories:
-                cat = cat.strip() 
-                if cat in q8_category_to_idx:
-                    q8_features[i, q8_category_to_idx[cat]] = 1
+         if response in q8_category_to_idx:
+            q8_features[i, q8_category_to_idx[response]] = 1
 
     features_list.append(q7_features)
     features_list.append(q8_features)
