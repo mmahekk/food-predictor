@@ -307,23 +307,8 @@ def predict_all(csv_file_path):
 
     
     X_predict = create_features_for_prediction(df_predict, params)
-    print(f"Created feature matrix with shape: {X_predict.shape}")
 
     predictions = predict(X_predict, coef, intercept, classes)
 
-    print(predictions)
-    # y_true = df_predict['Label'].values
-    # accuracy = np.mean(predictions == y_true)
-    # print(f"\nPrediction Accuracy: {accuracy:.4f}")
-    # print(predictions)
-    
-    # class_labels = sorted(list(np.unique(np.concatenate((y_true, predictions)))))
-    # model_classes = sorted(list(params['classes']))
-    # all_labels = sorted(list(set(class_labels + model_classes)))
-    # label_to_index = {label: i for i, label in enumerate(all_labels)}
-    # num_classes = len(all_labels)
-    # conf_matrix = np.zeros((num_classes, num_classes), dtype=int)
+    return predictions
 
-
-if __name__ == "__main__":
-    predict_all("../cleaned_data_combined.csv")
