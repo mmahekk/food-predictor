@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import re
 
+
+#functions from other files to use for cleaning data
 mapping = {
     "cola": "coca-cola",
     "coke": "coca-cola",
@@ -135,18 +137,15 @@ def process_q1_data(df):
 
     return q1_features, "complexity_rating"
 
+
+#modified to support not having a label column
 def process_q2_data_fix(df):
     q2_col = [col for col in df.columns if 'Q2' in col][0]
 
-    word_bank_by_label = {
-        'Pizza': {'cheese', 'tomato', 'dough', 'pepperoni', 'sauce', 'basil', 'water', 'oil', 'meat', 'olives'},
-        'Shawarma': {'meat', 'pita', 'garlic', 'tahini', 'salad', 'onion', 'chicken', 'sauce', 'fries', 'rice'},
-        'Sushi': {'rice', 'fish', 'seaweed', 'soy', 'wasabi', 'ginger', 'salmon', 'avocado'}
-    }
+    word_bank_by_label = {'cheese', 'tomato', 'dough', 'pepperoni', 'sauce', 'basil', 'water', 'oil', 'meat', 'olives', 'meat', 'pita', 'garlic', 'tahini', 'salad', 'onion', 'chicken', 'sauce', 'fries', 'rice', 'rice', 'fish', 'seaweed', 'soy', 'wasabi', 'ginger', 'salmon', 'avocado'},
 
     def clean_q2_row(row):
-        bank = word_bank_by_label.get(row["Label"], None)
-        return parse_q2_response(row[q2_col], word_bank=bank)
+        return parse_q2_response(row[q2_col], word_bank=word_bank_by_label)
 
     q2_cleaned = df.apply(clean_q2_row, axis=1)
 
@@ -187,23 +186,19 @@ def softmax(z):
 
 def predict(X, coef, intercept, classes):
     """Make predictions using the loaded model parameters."""
+    #multiple by feature matrix and add bias
     scores = X @ coef.T + intercept
+    #apply softmax to scores
     probabilities = softmax(scores)
+    #get the predicted class
     predicted_indices = np.argmax(probabilities, axis=1)
     predicted_labels = classes[predicted_indices]
     return predicted_labels
 
+#Note: this function is mostly reused code from the train_softmax_regression.py file
 def create_features_for_prediction(df, params):
     """
-    Creates the feature matrix X for prediction, ensuring the order and 
-    processing matches the training phase using loaded mappings.
-    
-    Args:
-        df: DataFrame with the input data.
-        params: Dictionary containing loaded model parameters and mappings.
-
-    Returns:
-        X: numpy array, the feature matrix for prediction.
+    create feature matrix for prediction
     """
     features_list = []
     
@@ -292,25 +287,38 @@ def create_features_for_prediction(df, params):
     return X
 
 def predict_all(csv_file_path):
+    """
+    predict all datapoints in csv file
+    """
 
+    #load params in
     params = np.load("softmax_model_params.npz", allow_pickle=True) 
         
     coef = params['coef']
     intercept = params['intercept']
     classes = params['classes']
 
-
+    #load the csv file into a dataframe
     df_predict = pd.read_csv(csv_file_path)
 
+    
     X_predict = create_features_for_prediction(df_predict, params)
     print(f"Created feature matrix with shape: {X_predict.shape}")
 
     predictions = predict(X_predict, coef, intercept, classes)
 
-
-    y_true = df_predict['Label'].values
-    accuracy = np.mean(predictions == y_true)
-    print(f"\nPrediction Accuracy: {accuracy:.4f}")
+    print(predictions)
+    # y_true = df_predict['Label'].values
+    # accuracy = np.mean(predictions == y_true)
+    # print(f"\nPrediction Accuracy: {accuracy:.4f}")
+    # print(predictions)
+    
+    # class_labels = sorted(list(np.unique(np.concatenate((y_true, predictions)))))
+    # model_classes = sorted(list(params['classes']))
+    # all_labels = sorted(list(set(class_labels + model_classes)))
+    # label_to_index = {label: i for i, label in enumerate(all_labels)}
+    # num_classes = len(all_labels)
+    # conf_matrix = np.zeros((num_classes, num_classes), dtype=int)
 
 
 if __name__ == "__main__":
